@@ -7,6 +7,7 @@
 #include <arrows/core/depth_utils.h>
 #include <arrows/mvg/sfm_utils.h>
 #include <arrows/vtk/depth_utils.h>
+#include <arrows/pdal/write_pdal.h>
 
 #include <kwiversys/Directory.hxx>
 #include <kwiversys/SystemTools.hxx>
@@ -78,6 +79,10 @@ bool check_config(kv::config_block_sptr config)
     && config_valid;
 
   config_valid =
+    validate_required_input_file("input_geo_origin_filename", *config,
+                                 main_logger) && config_valid;
+
+  config_valid =
     validate_required_input_dir("input_cameras_directory", *config,
                                  main_logger) && config_valid;
 
@@ -94,9 +99,9 @@ bool check_config(kv::config_block_sptr config)
     std::string output_mesh_file =
       config->get_value<std::string>("output_mesh_file");
     std::string extension = ST::GetFilenameLastExtension( output_mesh_file );
-    if (!( extension == ".vtp" || extension == ".obj" || extension == ".ply" ))
+    if (!( extension == ".vtp" || extension == ".obj" || extension == ".ply" || extension == ".las" ))
     {
-      KWIVER_CONFIG_FAIL("The output_mesh_file must have a .vtp, .ply, or .obj extension");
+      KWIVER_CONFIG_FAIL("The output_mesh_file must have a .vtp, .ply, .obj, or .las extension");
     }
   }
 
@@ -140,6 +145,7 @@ public:
   kv::path_t  input_cameras_directory = "results/krtd";
   kv::path_t  input_depths_directory = "results/depths";
   kv::path_t  input_landmarks_file = "results/landmarks.ply";
+  kv::path_t  input_geo_origin_file = "results/geo_origin.txt";
   kv::path_t  output_volume_file = "results/volume.vti";
   kv::path_t  output_mesh_file = "results/mesh.vtp";
 
@@ -187,6 +193,11 @@ public:
     {
       input_landmarks_file = cmd_args["input-landmarks-file"].as<std::string>();
       config->set_value("input_landmarks_file", input_landmarks_file);
+    }
+    if ( cmd_args.count("input-geo-origin-file") > 0 )
+    {
+      input_geo_origin_file = cmd_args["input-geo-origin-file"].as<std::string>();
+      config->set_value("input_geo_origin_filename", input_geo_origin_file);
     }
     if ( cmd_args.count("output-volume-file") > 0 )
     {
@@ -242,6 +253,9 @@ public:
 
     config->set_value("input_landmarks_file", input_landmarks_file,
       "Path to a file to read the landmarks from.");
+
+    config->set_value("input_geo_origin_filename", input_geo_origin_file,
+      "Path to a file to read the geographic origin from. ");
 
     config->set_value("input_depths_directory", input_depths_directory,
       "Directory to read the depth maps from.");
@@ -366,10 +380,15 @@ public:
         mesh_writer->AddInputDataObject(isosurface_mesh);
         mesh_writer->Write();
       }
+      else if ( extension == ".las" )
+      {
+        auto mesh_writer = new kwiver::arrows::pdal::write_pdal();
+        mesh_writer->write_pdal_file(output_mesh_file, input_geo_origin_file, landmark_map);
+      }
       else
       {
           LOG_WARN(main_logger, "output_mesh_file " << output_mesh_file
-                                << " was not a .ply, .obj, or .vtp file");
+                                << " was not a .ply, .obj, .vtp, or .las file");
           return false;
       }
       return true;
@@ -540,6 +559,9 @@ add_command_options()
     ( "v,output-volume-file",
       "Write out integrated integrated depth data to file (default: " +
       d->output_volume_file +")",
+      cxxopts::value<std::string>())
+    ( "g,geo-origin", "Output geographic origin file (default: " +
+      d->input_geo_origin_file + ")" ,
       cxxopts::value<std::string>())
     ( "t,isosurface-threshold", "isosurface extraction threshold (default: " +
       std::to_string(d->isosurface_threshold) + ")." , cxxopts::value<double>() )
