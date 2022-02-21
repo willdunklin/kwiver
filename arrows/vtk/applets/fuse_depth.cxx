@@ -7,7 +7,7 @@
 #include <arrows/core/depth_utils.h>
 #include <arrows/mvg/sfm_utils.h>
 #include <arrows/vtk/depth_utils.h>
-#include <arrows/pdal/write_pdal.h>
+#include <arrows/pdal/pointcloud_io.h>
 
 #include <kwiversys/Directory.hxx>
 #include <kwiversys/SystemTools.hxx>
@@ -382,8 +382,8 @@ public:
       }
       else if ( extension == ".las" )
       {
-        auto mesh_writer = new kwiver::arrows::pdal::write_pdal();
-        mesh_writer->write_pdal_file(output_mesh_file, input_geo_origin_file, landmark_map);
+        auto pointcloud_writer = new kwiver::arrows::pdal::pointcloud_io();
+        pointcloud_writer->save_(output_mesh_file, input_geo_origin_file, landmark_map);
       }
       else
       {
