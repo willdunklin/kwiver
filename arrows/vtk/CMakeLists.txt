@@ -52,6 +52,7 @@ endif()
 target_link_libraries( kwiver_algo_vtk
   PUBLIC               vital
                        ${VTK_public_targets}
+                       kwiver_algo_pdal
   PRIVATE              vital_algo
                        ${VTK_private_targets}
   )
