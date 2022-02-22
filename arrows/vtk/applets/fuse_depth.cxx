@@ -553,15 +553,14 @@ add_command_options()
       cxxopts::value<std::string>() )
     ( "l,input-landmarks-file", "3D sparse features (default: " +
       d->input_landmarks_file + ")", cxxopts::value<std::string>() )
+    ( "g,input-geo-origin-file", "Input geographic origin file (default: " +
+      d->input_geo_origin_file + ")", cxxopts::value<std::string>() )
     ( "m,output-mesh-file", "Write out isocontour mesh to file (default: " +
       d->output_mesh_file + ")",
       cxxopts::value<std::string>())
     ( "v,output-volume-file",
       "Write out integrated integrated depth data to file (default: " +
       d->output_volume_file +")",
-      cxxopts::value<std::string>())
-    ( "g,geo-origin", "Output geographic origin file (default: " +
-      d->input_geo_origin_file + ")" ,
       cxxopts::value<std::string>())
     ( "t,isosurface-threshold", "isosurface extraction threshold (default: " +
       std::to_string(d->isosurface_threshold) + ")." , cxxopts::value<double>() )
